@@ -49,6 +49,11 @@ docs:
 xref:
 	$(REBAR) xref skip_deps=true
 
+.PHONY: elvis
+elvis: get-deps
+	make -C deps/elvis escript
+	deps/elvis/elvis rock
+
 .PHONY: test
 test: eunit dialyzer
 
