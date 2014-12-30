@@ -13,6 +13,7 @@ otp_release:
   - R15B01
   - R15B
 script:
-  - make elvis
+  - "echo $TRAVIS_OTP_RELEASE"
+  - "[[ $TRAVIS_OTP_RELEASE == 17.0 ]] && make elvis || true"
   - make
   - make test
