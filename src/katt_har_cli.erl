@@ -17,12 +17,12 @@
 %%%
 %%% @doc Klarna API Testing Tool
 %%%
-%%% CLI.
+%%% KATT2HAR CLI.
 %%% @end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%_* Module declaration =======================================================
--module(katt_cli).
+-module(katt_har_cli).
 
 %%%_* Exports ==================================================================
 %% API
@@ -35,85 +35,44 @@ main([]) ->
 main(["-h"]) ->
   main(["--help"]);
 main(["--help"]) ->
-  io:fwrite( "Usage: ~s [--json] [--all] param=string param:=non_string -- "
-             "file.katt [file.katt] ~n"
-             "~n"
-             "Usage: ~s 2katt -- file.har [file.har] ~n"
-           , [escript:script_name(), escript:script_name()]
+  io:fwrite( "Usage: ~s 2katt -- file.har [file.har] ~n"
+           , [escript:script_name()]
            );
 main(Options) ->
-  main(Options, [], [], []).
-
-main(["2har"|Rest], [], [], []) ->
-  katt_har_cli:main(Rest);
+  main(Options, [], []).
 
 %%%_* Internal =================================================================
 
-main(["--json"|Rest], Options, [], []) ->
-  main(Rest, [{json, true}|Options], [], []);
+main(["--"|HARs], Options, []) ->
+  io:fwrite( "---- APIB generated from HAR ----~n"
+             "~n"
+             "---~n"
+             "~p~n"
+             "---~n"
+             "~n"
+           , [HARs]
+           ),
+  run(Options, HARs).
 
-main(["--all"|Rest], Options, [], []) ->
-  main(Rest, [{all, true}|Options], [], []);
-
-main(["--"|ScenarioFilenames], Options, Params0, []) ->
-  Params = parse_params(Params0),
-  run(Options, Params, ScenarioFilenames);
-main([Param|Rest], Options, Params, []) ->
-  main(Rest, Options, [Param|Params], []).
-
-run(_Options, _Params, []) ->
+run(_Options, []) ->
   ok;
-run(Options, Params0, [ScenarioFilename|ScenarioFilenames]) ->
-  KattResult0 = katt_run(ScenarioFilename, Params0),
-  KattResult = case {proplists:get_value('all', Options), KattResult0} of
-                 {false, { PassOrFail
-                         , ScenarioFilename
-                         , Params
-                         , FinalParams
-                         , TransactionResults0
-                         }} ->
-                   { PassOrFail
-                   , ScenarioFilename
-                   , Params
-                   , FinalParams
-                   , [lists:last(TransactionResults0)]
-                   };
-                 _ ->
-                   KattResult0
-               end,
-  case proplists:get_value(json, Options) of
-    undefined ->
-      io:fwrite("~p\n\n", [KattResult]);
-    true ->
-      JsonResult = katt_util:run_result_to_mochijson3(KattResult),
-      Result = iolist_to_binary(mochijson3:encode(JsonResult)),
-      io:fwrite("~s\n\n", [Result])
-  end,
-  case KattResult of
-    {pass, _, _, NewParams , _} ->
-      run(Options, NewParams, ScenarioFilenames);
-    _ ->
-      %% init:stop not setting status code correctly
-      %% init:stop(1)
-      halt(1)
-  end.
-
-katt_run(ScenarioFilename, Params) ->
+run(Options, [HAR|HARs]) ->
   %% Don't use application:ensure_all_started(katt)
   %% nor application:ensure_started(_)
   %% in order to maintain compatibility with R16B01 and lower
   ok = ensure_started(xmerl),
   ok = ensure_started(mochijson3),
-  ok = ensure_started(crypto),
-  ok = ensure_started(asn1),
-  ok = ensure_started(public_key),
-  ok = ensure_started(ssl),
-  ok = ensure_started(idna),
-  ok = ensure_started(mimerl),
-  ok = ensure_started(certifi),
-  ok = ensure_started(hackney),
-  ok = ensure_started(tdiff),
-  ok = ensure_started(katt),
+  %% ok = ensure_started(crypto),
+  %% ok = ensure_started(asn1),
+  %% ok = ensure_started(public_key),
+  %% ok = ensure_started(ssl),
+  %% ok = ensure_started(idna),
+  %% ok = ensure_started(mimerl),
+  %% ok = ensure_started(certifi),
+  %% ok = ensure_started(hackney),
+  %% ok = ensure_started(tdiff),
+  %% ok = ensure_started(katt),
+  
   katt:run( ScenarioFilename
           , Params
           , [{ progress
