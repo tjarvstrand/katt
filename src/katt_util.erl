@@ -40,6 +40,7 @@
         , validate/5
         , enumerate/1
         , external_http_request/6
+        , erl_to_list/1
         ]).
 
 %%%_* Includes =================================================================
@@ -97,7 +98,7 @@ insert_escape_quotes(Str) when is_list(Str) ->
 run_result_to_mochijson3({error, Reason, Details}) ->
   {struct, [ {error, true}
            , {reason, Reason}
-           , {details, list_to_binary(io_lib:format("~p", [Details]))}
+           , {details, list_to_binary(erl_to_list(Details))}
            ]};
 run_result_to_mochijson3({ PassOrFail
                    , ScenarioFilename
@@ -138,6 +139,9 @@ external_http_request(Url, Method, Hdrs, Body, Timeout, []) ->
     Error ->
       Error
   end.
+
+erl_to_list(Term) ->
+  io_lib:format("~p", [Term]).
 
 %%%_* Internal =================================================================
 
@@ -294,7 +298,7 @@ value_to_mochijson3(List) when is_list(List) ->
                )
   end;
 value_to_mochijson3(Value) ->
-  list_to_binary(io_lib:format("~p", [Value])).
+  list_to_binary(erl_to_list(Value)).
 
 is_valid(ParentKey, E, A) ->
   case validate(ParentKey, E, A) of
